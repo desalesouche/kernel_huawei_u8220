@@ -19,11 +19,19 @@
 #include <linux/jogball_driver.h>
 #include <linux/input.h>
 
+#ifdef  CONFIG_MACH_MSM7201A_SURF
+#define  JOGBALL_CTL  36
+#define GPIO_UP      108
+#define GPIO_DOWN    82
+#define GPIO_LEFT    84
+#define GPIO_RIGHT   85
+#else
 #define JOGBALL_CTL  38
 #define GPIO_UP      36
 #define GPIO_DOWN    32
 #define GPIO_LEFT    31
 #define GPIO_RIGHT   37
+#endif
 
 static struct jogball_button jogball_buttons[] = {
 

@@ -410,6 +410,7 @@ int mdp_dmap_vsync_get(void);
 int mdp4_debugfs_init(void);
 #endif
 
-int mdp_ppp_blit(struct fb_info *info, struct mdp_blit_req *req);
+int mdp_ppp_blit(struct fb_info *info, struct mdp_blit_req *req,
+		struct file **pp_src, struct file **pp_dest);
 
 #endif /* MDP_H */

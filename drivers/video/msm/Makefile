@@ -69,6 +69,8 @@ obj-y += mddi_toshiba_wvga.o
 obj-y += mddi_sharp.o
 obj-y += mddi_orise.o
 else
+obj-$(CONFIG_FB_MSM_MDDI_TC358723XBG_VGA_QCIF) += mddi_tc358723xbg.o
+obj-$(CONFIG_U8220_BACKLIGHT) += U8220_backlight.o
 obj-$(CONFIG_FB_MSM_MDDI_PRISM_WVGA) += mddi_prism.o
 obj-$(CONFIG_FB_MSM_MDDI_TOSHIBA_COMMON) += mddi_toshiba.o
 obj-$(CONFIG_FB_MSM_MDDI_TOSHIBA_COMMON_VGA) += mddi_toshiba_vga.o
@@ -102,8 +104,8 @@ obj-y += lcdc_ili9331b.o
 #/* U8300 need to support the HX8368a ic driver of TRULY LCD */
 obj-y += lcdc_hx8368a_qvga.o
 obj-y += huawei_backlight.o
-endif
 obj-y += lcdc_hx8357a_hvga.o
+endif
 obj-$(CONFIG_FB_MSM_TVOUT_NTSC) += tv_ntsc.o
 obj-$(CONFIG_FB_MSM_TVOUT_PAL) += tv_pal.o
 

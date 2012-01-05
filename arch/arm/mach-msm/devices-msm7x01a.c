@@ -747,6 +747,61 @@ void __init msm_camera_register_device(void *res, uint32_t num,
 	msm_register_device(&msm_camera_device, data);
 }
 
+
+#ifdef CONFIG_MSM_HW3D
+static struct resource resources_hw3d[] = {
+	{
+		.start	= 0xA0000000,
+		.end	= 0xA00fffff,
+		.flags	= IORESOURCE_MEM,
+		.name	= "regs",
+	},
+	{
+		.flags	= IORESOURCE_MEM,
+		.name	= "smi",
+	},
+	{
+		.flags	= IORESOURCE_MEM,
+		.name	= "ebi",
+	},
+	{
+		.start	= INT_GRAPHICS,
+		.end	= INT_GRAPHICS,
+		.flags	= IORESOURCE_IRQ,
+		.name	= "gfx",
+	},
+};
+
+struct platform_device hw3d_device = {
+	.name		= "msm_hw3d",
+	.id		= 0,
+	.num_resources	= ARRAY_SIZE(resources_hw3d),
+	.resource	= resources_hw3d,
+};
+
+void __init msm_add_gpu_devices(struct msm_hw3d_meminfo *setting)
+{
+if (setting->pmem_gpu0_size && setting->pmem_gpu1_size) {
+	struct resource *res;
+	
+	//gpu0 in smi	
+	res = platform_get_resource_byname(&hw3d_device, IORESOURCE_MEM,"smi");
+	res->start = setting->pmem_gpu0_start;
+	res->end = res->start + setting->pmem_gpu0_size - 1;
+	
+	/*gpu1 in ebi1,need not this config anymore, because this gpu1
+		memory already alloc in halibut_map_io before*/
+	//res = platform_get_resource_byname(&hw3d_device, IORESOURCE_MEM,"ebi");
+	//res->start = setting->pmem_gpu1_start;
+	//res->end = res->start + setting->pmem_gpu1_size - 1;
+	platform_device_register(&hw3d_device);
+}
+}
+#endif
+
+
+
+
 struct clk msm_clocks_7x01a[] = {
 	CLK_PCOM("adm_clk",	ADM_CLK,	NULL, 0),
 	CLK_PCOM("adsp_clk",	ADSP_CLK,	NULL, 0),

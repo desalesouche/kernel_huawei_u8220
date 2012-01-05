@@ -34,6 +34,9 @@
 #include <asm/mach-types.h>
 #include <linux/semaphore.h>
 
+#ifdef CONFIG_MSM_HW3D
+#include <linux/msm_hw3d.h>
+#endif
 #include "mdp.h"
 #include "msm_fb.h"
 
@@ -1243,7 +1246,16 @@ int get_img(struct mdp_img *img, struct fb_info *info, unsigned long *start,
 
 #ifdef CONFIG_ANDROID_PMEM
 	if (!get_pmem_file(img->memory_id, start, &vstart, len, pp_file))
+		{
 		return 0;
+		}
+#endif
+#ifdef CONFIG_MSM_HW3D
+	else if (!get_msm_hw3d_file(img->memory_id, &img->offset, start, len,
+				    pp_file))
+	{
+		return 0;
+	}
 #endif
 	file = fget_light(img->memory_id, &put_needed);
 	if (file == NULL)
@@ -1270,7 +1282,8 @@ void put_img(struct file *p_src_file)
 }
 
 
-int mdp_ppp_blit(struct fb_info *info, struct mdp_blit_req *req)
+int mdp_ppp_blit(struct fb_info *info, struct mdp_blit_req *req,
+		struct file **pp_src_file, struct file **pp_dst_file)
 {
 	unsigned long src_start, dst_start;
 	unsigned long src_len = 0;
@@ -1297,6 +1310,8 @@ int mdp_ppp_blit(struct fb_info *info, struct mdp_blit_req *req)
 		       "memory\n");
 		return -1;
 	}
+	*pp_src_file = p_src_file;
+	*pp_dst_file = p_dst_file;
 	if (mdp_ppp_verify_req(req)) {
 		printk(KERN_ERR "mdp_ppp: invalid image!\n");
 		put_img(p_src_file);

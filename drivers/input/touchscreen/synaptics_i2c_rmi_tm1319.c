@@ -170,7 +170,7 @@ static enum hrtimer_restart synaptics_ts_timer_func(struct hrtimer *timer)
 static irqreturn_t synaptics_ts_irq_handler(int irq, void *dev_id)
 {
 	struct synaptics_ts_data *ts = dev_id;
-	disable_irq(ts->client->irq);
+	disable_irq_nosync(ts->client->irq);
 	SYNAPITICS_DEBUG("synaptics_ts_irq_handler,disable irq\n");
 	queue_work(synaptics_wq, &ts->work);
 	return IRQ_HANDLED;
@@ -195,7 +195,7 @@ static int synaptics_ts_probe(
 	}
 	
 	/* power on touchscreen */
-    v_gp5 = vreg_get(NULL,"gp5");
+    v_gp5 = vreg_get(NULL,"gp6");
     ret = IS_ERR(v_gp5);
     if(ret) 
         goto err_power_on_failed;
@@ -277,20 +277,20 @@ succeed_find_device:
 	}   
 
 	
-	gpio_config = GPIO_CFG(29, 0, GPIO_INPUT, GPIO_PULL_UP, GPIO_2MA);
+	gpio_config = GPIO_CFG(57, 0, GPIO_INPUT, GPIO_PULL_UP, GPIO_2MA);
 	ret = gpio_tlmm_config(gpio_config, GPIO_ENABLE);
-	SYNAPITICS_DEBUG(KERN_ERR "%s: gpio_tlmm_config(%#x)=%d\n", __func__, 29, ret);
+	SYNAPITICS_DEBUG(KERN_ERR "%s: gpio_tlmm_config(%d)=%d\n", __func__, 57, ret);
 	if (ret) 
 	{
 		ret = -EIO;
 		goto err_input_register_device_failed;
 	}
-	if (gpio_request(29, "synaptics_ts_int\n"))
+	if (gpio_request(57, "synaptics_ts_int\n"))
 		pr_err("failed to request gpio synaptics_ts_int\n");
 	
-	ret = gpio_configure(29, GPIOF_INPUT | IRQF_TRIGGER_LOW);/*gpio 29is interupt for touchscreen.*/
+	ret = gpio_configure(57, GPIOF_INPUT | IRQF_TRIGGER_LOW);//gpio 57is interupt for touchscreen.//
 	if (ret) {
-		SYNAPITICS_DEBUG(KERN_ERR "synaptics_ts_probe: gpio_configure 29 failed\n");
+		SYNAPITICS_DEBUG(KERN_ERR "synaptics_ts_probe: gpio_configure 57 failed\n");
 		goto err_input_register_device_failed;
 	}
 

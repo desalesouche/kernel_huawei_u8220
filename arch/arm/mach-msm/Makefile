@@ -95,6 +95,7 @@ obj-$(CONFIG_HUAWEI_U8220_KEYBOARD) += keypad_linux_u8220.o
 obj-$(CONFIG_HUAWEI_JOGBALL) +=jogball_device.o 
 
 obj-$(CONFIG_HUAWEI_MSM_VIBRATOR) += msm_vibrator.o huawei_serial_server.o kernel_msm_msg.o
+obj-$(CONFIG_SERIAL_MSM) += huawei_serial_server.o kernel_msm_msg.o
 
 #/*add code to support JOY(U8120) */
 obj-$(CONFIG_HUAWEI_FEATURE_OFN_KEY) += msm_ofn_key.o
@@ -102,7 +103,7 @@ obj-$(CONFIG_HUAWEI_FEATURE_OFN_KEY) += msm_ofn_key.o
 obj-$(CONFIG_SURF_FFA_GPIO_KEYPAD) += keypad-surf-ffa.o
 obj-$(CONFIG_HUAWEI_GPIO_KEYPAD) += Keypad-huawei.o
 
-obj-$(CONFIG_ARCH_MSM7X01A) += board-halibut.o devices-msm7x01a.o
+obj-$(CONFIG_ARCH_MSM7X01A) += board-u8220.o devices-msm7x01a.o
 obj-$(CONFIG_MACH_TROUT) += board-trout.o board-trout-gpio.o
 obj-$(CONFIG_MACH_TROUT) += board-trout-keypad.o board-trout-panel.o
 obj-$(CONFIG_MACH_TROUT) += htc_akm_cal.o htc_wifi_nvs.o htc_acoustic.o

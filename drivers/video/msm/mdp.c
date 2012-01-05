@@ -902,7 +902,7 @@ static int mdp_probe(struct platform_device *pdev)
 		mdp4_hw_init();
 		mdp4_fetch_cfg(clk_get_rate(mdp_clk));
 #else
-#if 0
+#ifdef CONFIG_ARCH_MSM7X01A
 		mdp_hw_init();
 #else
         mdp_init_scale_table();

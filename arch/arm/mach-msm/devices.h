@@ -106,6 +106,16 @@ extern unsigned msm_num_clocks_8x60;
 void __init msm_fb_register_device(char *name, void *data);
 void __init msm_camera_register_device(void *, uint32_t, void *);
 extern struct platform_device msm_device_touchscreen;
+#ifdef CONFIG_MSM_HW3D
+struct msm_hw3d_meminfo{
+	resource_size_t pmem_gpu0_start;
+	resource_size_t pmem_gpu0_size;
+	resource_size_t pmem_gpu1_start;
+	resource_size_t pmem_gpu1_size;
+};
+extern struct platform_device hw3d_device;
+extern void __init msm_add_gpu_devices(struct msm_hw3d_meminfo *setting);
+#endif
 
 #ifdef CONFIG_GPIOLIB
 #define MSM7200A_GPIO_PLATFORM_DATA(ix, begin, end, irq)		\

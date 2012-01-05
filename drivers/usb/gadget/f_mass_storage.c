@@ -3228,7 +3228,9 @@ static ssize_t store_file(struct device *dev, struct device_attribute *attr,
 	if (count > 0 && buf[count-1] == '\n')
 		((char *) buf)[count-1] = 0;
 
+#ifdef CONFIG_USB_AUTO_INSTALL
 	USB_PR("curlun=%x\n", curlun);
+#endif
 	/* Eject current medium */
 	down_write(&fsg->filesem);
 	if (backing_file_is_open(curlun)) {
@@ -3244,7 +3246,9 @@ static ssize_t store_file(struct device *dev, struct device_attribute *attr,
 					SS_NOT_READY_TO_READY_TRANSITION;
 	}
 	up_write(&fsg->filesem);
+#ifdef CONFIG_USB_AUTO_INSTALL
 	USB_PR("leave\n");
+#endif
 	return (rc < 0 ? rc : count);
 }
 

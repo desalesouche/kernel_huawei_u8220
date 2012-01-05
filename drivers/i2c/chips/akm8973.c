@@ -46,7 +46,11 @@
 #define DEBUG 0
 #define MAX_FAILURE_COUNT 10
 
+#ifdef CONFIG_MACH_MSM7201A_SURF
+#define COMPASS_RST    90
+#else
 #define COMPASS_RST    23
+#endif
 
 static struct i2c_client *this_client;
 

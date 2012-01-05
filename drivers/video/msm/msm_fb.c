@@ -38,6 +38,9 @@
 #include <linux/debugfs.h>
 #include <linux/console.h>
 #include <linux/android_pmem.h>
+#ifdef CONFIG_MSM_HW3D
+#include <linux/msm_hw3d.h>
+#endif
 #include <linux/leds.h>
 
 #define MSM_FB_C
@@ -54,6 +57,9 @@
 #include <mach/huawei_battery.h>
 #endif
 
+#ifdef CONFIG_U8220_BACKLIGHT
+extern void    U8220_set_backlight(int level);
+#endif
 #ifdef CONFIG_FB_MSM_LOGO
 #if 0
 #define INIT_IMAGE_FILE "/logo.rle"
@@ -174,7 +180,7 @@ static void msm_fb_set_bl_brightness(struct led_classdev *led_cdev,
 	if (!bl_lvl && value)
 		bl_lvl = 1;
 
-	msm_fb_set_backlight(mfd, bl_lvl, 1);
+	msm_fb_set_backlight(mfd, bl_lvl, 0);
 }
 
 static struct led_classdev backlight_led = {
@@ -511,7 +517,12 @@ void msm_fb_set_backlight(struct msm_fb_data_type *mfd, __u32 bkl_lvl, u32 save)
 
 			old_lvl = mfd->bl_level;
 			mfd->bl_level = bkl_lvl;
+#ifdef CONFIG_U8220_BACKLIGHT
+			U8220_set_backlight(bkl_lvl);
+#else
 			pdata->set_backlight(mfd);
+#endif
+
 
 #ifdef CONFIG_HUAWEI_EVALUATE_POWER_CONSUMPTION
             huawei_rpc_current_consuem_notify(EVENT_LCD_BACKLIGHT, bkl_lvl);
@@ -543,20 +554,25 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 	switch (blank_mode) {
 	case FB_BLANK_UNBLANK:
 		if (!mfd->panel_power_on) {
-#ifndef CONFIG_HUAWEI_KERNEL
-            mdelay(100);
-#else 
-            set_current_state(TASK_INTERRUPTIBLE);
-            schedule_timeout(HZ/10);  // sleep 100ms
-            
+#if !defined(CONFIG_U8220_BACKLIGHT) && !defined(CONFIG_HUAWEI_KERNEL)
+			mdelay(100);
 #endif
+#ifdef CONFIG_HUAWEI_KERNEL
+			set_current_state(TASK_INTERRUPTIBLE);
+			schedule_timeout(HZ/10);  // sleep 100ms
+#endif
+#ifdef CONFIG_U8220_BACKLIGHT
+			mfd->panel_power_on = TRUE;
+			mdelay(1);
+#endif
+
 			ret = pdata->on(mfd->pdev);
 			if (ret == 0) {
 				mfd->panel_power_on = TRUE;
-
+#ifndef CONFIG_U8220_BACKLIGHT
 				msm_fb_set_backlight(mfd,
 						     mfd->bl_level, 0);
-
+#endif
 /* ToDo: possible conflict with android which doesn't expect sw refresher */
 /*
 	  if (!mfd->hw_refresh)
@@ -568,6 +584,11 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 	  }
 */
 			}
+#ifdef CONFIG_U8220_BACKLIGHT
+			else {
+				mfd->panel_power_on = FALSE;
+			}
+#endif
 		}
 		break;
 
@@ -592,8 +613,9 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			ret = pdata->off(mfd->pdev);
 			if (ret)
 				mfd->panel_power_on = curr_pwr_state;
-
+#ifndef CONFIG_U8220_BACKLIGHT
 			msm_fb_set_backlight(mfd, 0, 0);
+#endif
 			mfd->op_enable = TRUE;
 		}
 		break;
@@ -663,8 +685,12 @@ static void msm_fb_imageblit(struct fb_info *info, const struct fb_image *image)
 
 static int msm_fb_blank(int blank_mode, struct fb_info *info)
 {
+#ifndef CONFIG_FB_MSM_MDDI_TC358723XBG_VGA_QCIF
 	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
 	return msm_fb_blank_sub(blank_mode, info, mfd->op_enable);
+#else
+	return 0;
+#endif
 }
 
 static int msm_fb_set_lut(struct fb_cmap *cmap, struct fb_info *info)
@@ -1618,9 +1644,40 @@ static int mdp_blit_split_height(struct fb_info *info,
 }
 #endif
 
+// from Aurora .29 and Huawei .29's u8220
+void mdp_ppp_put_img(struct mdp_blit_req *req, struct file *p_src_file,
+		struct file *p_dst_file)
+{
+#ifdef CONFIG_ANDROID_PMEM
+	if (p_src_file){
+		//if(is_pmem_file(p_src_file)){
+		if (0){
+			put_pmem_file(p_src_file);
+		}
+		#ifdef CONFIG_MSM_HW3D 
+		else if(is_msm_hw3d_file(p_src_file)){
+			put_msm_hw3d_file(p_src_file);
+		}
+		#endif
+	}
+	if (p_dst_file){
+		//if(is_pmem_file(p_dst_file)){
+		if (0){
+			put_pmem_file(p_dst_file);
+		}		
+		#ifdef CONFIG_MSM_HW3D 
+		else if(is_msm_hw3d_file(p_dst_file)){
+			put_msm_hw3d_file(p_dst_file);
+		}
+		#endif
+	}
+#endif
+}
+
 int mdp_blit(struct fb_info *info, struct mdp_blit_req *req)
 {
 	int ret;
+	struct file *p_src_file = 0, *p_dst_file = 0;
 #ifdef CONFIG_FB_MSM_MDP31
 	unsigned int remainder = 0, is_bpp_4 = 0;
 	struct mdp_blit_req splitreq;
@@ -1810,7 +1867,8 @@ int mdp_blit(struct fb_info *info, struct mdp_blit_req *req)
 		ret = mdp_ppp_blit(info, req);
 	return ret;
 #else
-	ret = mdp_ppp_blit(info, req);
+	ret = mdp_ppp_blit(info, req, &p_src_file, &p_dst_file);
+	mdp_ppp_put_img(req, p_src_file, p_dst_file);
 	return ret;
 #endif
 }
@@ -2282,6 +2340,18 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 	int ret = 0;
 
 	switch (cmd) {
+#ifdef CONFIG_FB_MSM_MDDI_TC358723XBG_VGA_QCIF
+	case MSMFB_SET_BACKLIGHT:
+		{
+			unsigned int grp_bl;
+
+			ret = copy_from_user(&grp_bl, argp, sizeof(grp_bl));
+			if (ret)
+				return ret;
+			msm_fb_set_backlight(mfd,grp_bl,1);
+			break;
+		}
+#endif
 #ifdef CONFIG_FB_MSM_OVERLAY
 	case MSMFB_OVERLAY_GET:
 		down(&msm_fb_ioctl_ppp_sem);

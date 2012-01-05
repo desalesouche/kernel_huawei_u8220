@@ -2370,6 +2370,17 @@ config FB_MSM_MDDI_TOSHIBA_WVGA_PORTRAIT
 	---help---
 	  Support for MDDI Toshiba WVGA (480x800) panel
 
+config FB_MSM_MDDI_TC358723XBG_VGA_QCIF
+	bool "MDDI TC358723XBG VGA Dual Panel"
+	select FB_MSM_MDDI
+	---help---
+	  Support for MDDI TC358723XBG VGA (480x640) and QCIF (176x220) dual panel
+
+config U8220_BACKLIGHT
+	bool "U8220 backlight"
+	depends on FB_MSM_MDDI_TC358723XBG_VGA_QCIF
+	default y
+
 config FB_MSM_MDDI_TOSHIBA_VGA
 	bool "MDDI Toshiba VGA Panel"
 	select FB_MSM_MDDI_TOSHIBA_COMMON_VGA

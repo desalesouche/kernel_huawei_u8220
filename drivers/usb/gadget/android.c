@@ -111,7 +111,9 @@ static const char longname[] = "Gadget Android";
 static u8 hostaddr[ETH_ALEN];
 #endif
 
+#ifdef CONFIG_USB_AUTO_INSTALL
 extern usb_switch_stru usb_switch_para;
+#endif
 
 /* Default vendor ID, overridden by platform data */
 #define VENDOR_ID		0x18D1
@@ -437,14 +439,14 @@ static int  android_bind(struct usb_composite_dev *cdev)
 			return ret;
 	}
 
-	if (is_usb_networking_on()) {
+#if defined(CONFIG_USB_ANDROID_CDC_ECM) || defined(CONFIG_USB_ANDROID_RNDIS)
 		/* set up network link layer */
 		ret = gether_setup(cdev->gadget, hostaddr);
 		if (ret && (ret != -EBUSY)) {
 			gserial_cleanup();
 			return ret;
 		}
-	}
+#endif
 
 	/* register our configuration */
 	ret = usb_add_config(cdev, &android_config_driver);
@@ -527,7 +529,9 @@ static int android_switch_composition(u16 pid)
 	func = android_validate_product_id(pid);
 	if (!func) {
 		pr_err("%s: invalid product id %x\n", __func__, pid);
+#ifdef CONFIG_USB_AUTO_INSTALL
 		usb_switch_para.inprogress = 0;
+#endif
 		return -EINVAL;
 	}
 
@@ -555,7 +559,9 @@ static int android_switch_composition(u16 pid)
     
 	usb_composite_unregister(&android_usb_driver);
 	ret = usb_composite_register(&android_usb_driver);
+#ifdef CONFIG_USB_AUTO_INSTALL
 	usb_switch_para.inprogress = 0;
+#endif
 	return ret;
 }
 
@@ -967,8 +973,9 @@ module_init(init);
 
 static void __exit cleanup(void)
 {
-	if (is_usb_networking_on())
+#if defined(CONFIG_USB_ANDROID_CDC_ECM) || defined(CONFIG_USB_ANDROID_RNDIS)
 		gether_cleanup();
+#endif
 
 	usb_composite_unregister(&android_usb_driver);
 	misc_deregister(&adb_enable_device);
