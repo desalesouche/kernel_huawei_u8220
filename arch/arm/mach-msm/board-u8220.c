@@ -660,6 +660,12 @@ hw_ver_sub_type get_hw_sub_board_id(void)
 	return HW_VER_SUB_SURF;
 }
 
+lcd_panel_type lcd_panel_probe(void)
+{
+	/* any panel to satisfy callback */
+	return LCD_S6D74A0_SAMSUNG_HVGA;
+}
+
 char *get_lcd_panel_name(void)
 {
 	char *pname = "UNKNOWN LCD";
@@ -686,6 +692,15 @@ bool st303_gs_is_supported(void)
 void set_st303_gs_support(bool status)
 {
     st303_gs_state = status;
+}
+
+/*
+ *  return: 0 ----not support RGB LED driver
+ *          1 ----support RGB LED driver
+ */
+bool rgb_led_is_supported(void)
+{
+	return false;
 }
 
 /*

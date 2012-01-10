@@ -442,7 +442,7 @@ endmenu
 
 config  HUAWEI_KERNEL
 	bool "HUAWEI Product"
-	depends on ARCH_MSM7X25	
+	depends on (ARCH_MSM7X01A || ARCH_MSM7X25)
 	
 
 config MSM_STACKED_MEMORY
