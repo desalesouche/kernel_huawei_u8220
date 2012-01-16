@@ -49,8 +49,11 @@ Notice that changes are listed in reverse chronological order.
  * Message to indicate particular feature has been enabled or disabled
  */
 
-
+#ifdef CONFIG_MSM_7200A_ADSP
+#define	AUDPREPROC_MSG_CMD_CFG_DONE_MSG	0x0000
+#else
 #define	AUDPREPROC_MSG_CMD_CFG_DONE_MSG	0x0001
+#endif
 #define	AUDPREPROC_MSG_CMD_CFG_DONE_MSG_LEN	\
 	sizeof(audpreproc_msg_cmd_cfg_done_msg)
 
@@ -72,7 +75,11 @@ typedef struct {
  * Message to indicate particular feature has selected for wrong samp freq
  */
 
+#ifdef CONFIG_MSM_7200A_ADSP
+#define	AUDPREPROC_MSG_ERROR_MSG_ID		0x0001
+#else
 #define	AUDPREPROC_MSG_ERROR_MSG_ID		0x0002
+#endif
 #define	AUDPREPROC_MSG_ERROR_MSG_ID_LEN	\
 	sizeof(audpreproc_msg_error_msg_id)
 

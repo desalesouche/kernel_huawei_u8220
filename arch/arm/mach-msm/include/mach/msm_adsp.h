@@ -48,6 +48,8 @@ int msm_adsp_write(struct msm_adsp_module *module,
 		   unsigned queue_id,
 		   void *data, size_t len);
 
+#ifndef CONFIG_MSM_7200A_ADSP
+
 #define ADSP_MESSAGE_ID 0xFFFF
 
 /* Command Queue Indexes */
@@ -92,5 +94,7 @@ int msm_adsp_write(struct msm_adsp_module *module,
 #define QDSP_uPAudRec1BitStreamQueue      38
 #define QDSP_uPAudRec1CmdQueue            39
 #define QDSP_MAX_NUM_QUEUES               40
+
+#endif
 
 #endif

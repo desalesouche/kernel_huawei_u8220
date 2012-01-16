@@ -52,6 +52,16 @@ Notice that changes are listed in reverse chronological order.
 #define AUDPP_MSG_STATUS_MSG_LEN	\
 	sizeof(audpp_msg_status_msg)
 
+#ifdef CONFIG_MSM_7200A_ADSP
+
+#define AUDPP_MSG_STATUS_SLEEP		0x0000
+#define AUDPP_MSG__STATUS_INIT		0x0001
+#define AUDPP_MSG_MSG_STATUS_CFG	0x0002
+#define AUDPP_MSG_STATUS_PLAY		0x0003
+
+#define AUDPP_MSG_REASON_MIPS	0x0000
+#define AUDPP_MSG_REASON_MEM	0x0001
+#else
 #define AUDPP_MSG_STATUS_SLEEP		0x0000
 #define AUDPP_MSG_STATUS_INIT		0x0001
 #define AUDPP_MSG_STATUS_CFG		0x0002
@@ -60,7 +70,7 @@ Notice that changes are listed in reverse chronological order.
 #define AUDPP_MSG_REASON_NONE	0x0000
 #define AUDPP_MSG_REASON_MEM	0x0001
 #define AUDPP_MSG_REASON_NODECODER 0x0002
-
+#endif
 typedef struct{
 	unsigned short dec_id;
 	unsigned short status;
@@ -316,6 +326,7 @@ struct audpp_msg_routing_ack {
 
 #define AUDPP_MSG_FLUSH_ACK 0x000A
 
+#ifndef CONFIG_MSM_7200A_ADSP
 #define ADSP_MESSAGE_ID 0xFFFF
-
+#endif
 #endif /* QDSP5AUDPPMSG_H */

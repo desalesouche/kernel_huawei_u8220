@@ -1019,6 +1019,14 @@ config MSM_ADSP
 	help
 	  Provides access to registers needed by the userspace aDSP library.
 
+config MSM_7200A_ADSP
+        tristate "MSM ADSP driver"
+        depends on ANDROID_PMEM
+        depends on MACH_HALIBUT
+        default n
+        help
+          Provides access to registers needed by the userspace aDSP library.
+
 config ADSP_RPC_VER
 	hex
 	default 0x30002 if (ARCH_MSM7X27 || (ARCH_MSM7X25 && AMSS_7X25_VERSION_2009))

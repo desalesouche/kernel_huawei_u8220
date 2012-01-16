@@ -274,8 +274,11 @@ typedef struct {
 
 #define AUDPP_CMD_WAV_PCM_WIDTH_8	0x0000
 #define AUDPP_CMD_WAV_PCM_WIDTH_16	0x0001
+#ifdef CONFIG_MSM_7200A_ADSP
+#define AUDPP_CMD_WAV_PCM_WIDTH_32	0x0002
+#else
 #define AUDPP_CMD_WAV_PCM_WIDTH_24	0x0002
-
+#endif
 typedef struct {
 	audpp_cmd_cfg_adec_params_common		common;
 	unsigned short					stereo_cfg;
@@ -383,6 +386,9 @@ typedef struct {
   unsigned short                        aac_spectral_data_resilience_flag;
   unsigned short                        sbr_on_flag;
   unsigned short                        sbr_ps_on_flag;
+#ifdef CONFIG_MSM_7200A_ADSP
+  unsigned short                        dual_mono_mode;
+#endif
   unsigned short                        channel_configuration;
 } __attribute__((packed)) audpp_cmd_cfg_adec_params_aac;
 
@@ -779,7 +785,20 @@ typedef struct {
 
 #define AUDPP_CMD_ADRC_FLAG_DIS		0x0000
 #define AUDPP_CMD_ADRC_FLAG_ENA		-1
-
+#ifdef CONFIG_MSM_7200A_ADSP
+typedef struct {
+	audpp_cmd_cfg_object_params_common 	common;
+	signed short				adrc_flag;
+	unsigned short				compression_th;
+	unsigned short				compression_slope;
+	unsigned short				rms_time;
+	unsigned short				attack_const_lsw;
+	unsigned short				attack_const_msw;
+	unsigned short				release_const_lsw;
+	unsigned short				release_const_msw;
+	unsigned short				adrc_system_delay;
+} __attribute__((packed)) audpp_cmd_cfg_object_params_adrc;
+#else
 #define	AUDPP_MAX_MBADRC_BANDS		5
 #define	AUDPP_MBADRC_EXTERNAL_BUF_SIZE	196
 
@@ -820,6 +839,7 @@ struct audpp_cmd_cfg_object_params_adrc {
 	unsigned short	release_const_msw;
 	unsigned short	adrc_delay;
 };
+#endif
 
 /*
  * Command Structure to configure post processing parameters(Spectrum Analizer)
@@ -857,7 +877,18 @@ typedef struct {
 
 #define AUDPP_CMD_QCON_EXPANSION_MAX		0x7FFF
 
+#ifdef CONFIG_MSM_7200A_ADSP
 
+typedef struct {
+	audpp_cmd_cfg_object_params_common 	common;
+	signed short				enable_flag;
+	signed short				output_mode;
+	signed short				gain;
+	signed short				expansion;
+	signed short				delay;
+	unsigned short				stages_per_mode;
+} __attribute__((packed)) audpp_cmd_cfg_object_params_qconcert;
+#else
 typedef struct {
 	audpp_cmd_cfg_object_params_common 	common;
 	signed short				enable_flag;
@@ -880,7 +911,7 @@ typedef struct {
 	unsigned short                          delay_buff_start_msw;
 	unsigned short                          delay_buff_start_lsw;
 } __attribute__((packed)) audpp_cmd_cfg_object_params_qconcert;
-
+#endif
 /*
  * Command Structure to configure post processing parameters (Side Chain) 
  */
