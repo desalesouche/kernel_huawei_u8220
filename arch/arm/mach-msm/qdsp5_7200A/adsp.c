@@ -1162,7 +1162,7 @@ static struct platform_driver msm_adsp_driver = {
 	},
 };
 
-static char msm_adsp_driver_name[] = "rs00000000:00000000";
+static char msm_adsp_driver_name[] = "rs00000000";
 
 static int __init adsp_init(void)
 {
@@ -1176,9 +1176,8 @@ static int __init adsp_init(void)
 	rpc_adsp_rtos_mtoa_vers_comp = 0x00030001;
 
 	snprintf(msm_adsp_driver_name, sizeof(msm_adsp_driver_name),
-		"rs%08x:%08x",
-		rpc_adsp_rtos_atom_prog,
-		rpc_adsp_rtos_atom_vers & RPC_VERSION_MAJOR_MASK);
+		"rs%08x",
+		rpc_adsp_rtos_atom_prog);
 	msm_adsp_driver.driver.name = msm_adsp_driver_name;
 	rc = platform_driver_register(&msm_adsp_driver);
 	printk(KERN_INFO "ADSP: %s -- %d\n", msm_adsp_driver_name, rc);
