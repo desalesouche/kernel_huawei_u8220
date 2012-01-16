@@ -74,7 +74,7 @@ static void msm_keypad_bl_led_set(struct led_classdev *led_cdev,
 }
 
 static struct led_classdev msm_kp_bl_led = {
-	.name			= "button-backlight",
+	.name			= "keyboard-backlight",
 	.brightness_set		= msm_keypad_bl_led_set,
 	.brightness		= LED_OFF,
 };
