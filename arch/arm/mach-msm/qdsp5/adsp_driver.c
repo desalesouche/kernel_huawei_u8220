@@ -28,10 +28,12 @@
 #include <linux/android_pmem.h>
 #include <mach/debug_mm.h>
 
+#if 0
 struct adsp_pmem_info {
 	int fd;
 	void *vaddr;
 };
+#endif
 
 struct adsp_pmem_region {
 	struct hlist_node list;
