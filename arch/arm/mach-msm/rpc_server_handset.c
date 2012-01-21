@@ -539,6 +539,7 @@ static int __devinit hs_rpc_init(void)
 	if (machine_is_msm7x27_surf() || machine_is_msm7x27_ffa() ||
 		machine_is_qsd8x50_surf() || machine_is_qsd8x50_ffa() ||
 		machine_is_msm7x30_surf() || machine_is_msm7x30_ffa() ||
+		machine_is_msm7201a_surf() ||machine_is_msm7201a_ffa() ||
 		machine_is_msm7x25_surf() || machine_is_msm7x25_ffa() ||
 		cpu_is_msm7x25() ) {
 
@@ -549,7 +550,7 @@ static int __devinit hs_rpc_init(void)
 	rc = hs_rpc_cb_init();
 	if (rc) {
 		pr_err("%s: failed to initialize rpc client\n", __func__);
-		return rc;
+//		return rc;
 	}
 	}
 	rc = msm_rpc_create_server(&hs_rpc_server);
