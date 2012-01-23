@@ -169,9 +169,9 @@ static int melfas_ts_probe(struct i2c_client *client, const struct i2c_device_id
 	int gpio_config, rc;
 	int i;
 	struct melfas_i2c_platform_data *pdata;
-	struct mpp *mpp_ts_reset;
+	unsigned mpp_ts_reset = 13;
 	struct vreg *v_gp6;
-  
+
 	MELFAS_DEBUG(" In melfas_ts_probe: \n");
 	
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) 
@@ -193,13 +193,7 @@ static int melfas_ts_probe(struct i2c_client *client, const struct i2c_device_id
     ret = vreg_enable(v_gp6);
     if (ret)
         return ret;
-    
-  mpp_ts_reset = mpp_get(NULL, "mpp14");
-	if (!mpp_ts_reset)
-	{
-		MELFAS_DEBUG(KERN_ERR "%s: mpp14 get failed\n", __func__);
-		goto err_mpp_get;
-	}
+
 	ret = mpp_config_digital_out(mpp_ts_reset,
 	      MPP_CFG(MPP_DLOGIC_LVL_MSMP,MPP_DLOGIC_OUT_CTRL_HIGH ));	
 	if (ret) 
@@ -327,7 +321,6 @@ err_input_dev_alloc_failed:
 err_power_failed:
 	kfree(ts);
 
-err_mpp_get:
 err_alloc_data_failed:
 err_find_touchpanel_failed:
 err_check_functionality_failed:
@@ -337,15 +330,9 @@ err_check_functionality_failed:
 static int melfas_ts_power(struct i2c_client *client, int on)
 {
   int ret;
-  struct mpp *mpp_ts_reset;
+  unsigned mpp_ts_reset = 13;
   MELFAS_DEBUG("melfas_ts_power on");
-  mpp_ts_reset = mpp_get(NULL, "mpp14");
-	if (!mpp_ts_reset)
-	{
-		MELFAS_DEBUG(KERN_ERR "%s: mpp14 get failed\n", __func__);
-		goto err_mpp_get;
-	}
-  
+
 	if (on) 
 	{			  
 		ret = mpp_config_digital_out(mpp_ts_reset,
@@ -366,7 +353,6 @@ static int melfas_ts_power(struct i2c_client *client, int on)
 	}	
 	return ret;	
 	
-err_mpp_get:
     return 0;
 }
 
