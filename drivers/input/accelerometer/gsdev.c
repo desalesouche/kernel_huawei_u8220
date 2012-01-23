@@ -612,7 +612,7 @@ static int gs_probe(
 			printk(KERN_ERR "gs_probe: Failed to allocate input device\n");
 			goto err_input_dev_alloc_failed;
 		}
-		gs->input_dev->name = "gsensor";
+		gs->input_dev->name = "sensors";
 		sensor_dev = gs->input_dev;
 	}else{
 	

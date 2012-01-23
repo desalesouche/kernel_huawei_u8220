@@ -466,7 +466,7 @@ static int gs_probe(
 			goto err_input_dev_alloc_failed;
 		}
 		
-		gs->input_dev->name = "gsensor";
+		gs->input_dev->name = "sensors";
 		sensor_dev = gs->input_dev;
 		
 	}else{
