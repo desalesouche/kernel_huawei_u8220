@@ -223,9 +223,6 @@ msmsdcc_request_end(struct msmsdcc_host *host, struct mmc_request *mrq)
 static void
 msmsdcc_stop_data(struct msmsdcc_host *host)
 {
-	if (SDCC_WIFI_SLOT == host->pdev_id) {
-		memset(&host->pio, 0, sizeof(host->pio));
-	}
 	host->curr.data = NULL;
 	host->curr.got_dataend = 0;
 }
@@ -1361,12 +1358,10 @@ set_polling(struct device *dev, struct device_attribute *attr,
 	spin_lock_irqsave(&host->lock, flags);
 	if (value) {
 		mmc->caps |= MMC_CAP_NEEDS_POLL;
-#if 0
 		if (host->pdev_id == SDCC_WIFI_SLOT) {
 		printk("%s: no need to enable polling for slot 2 \n",__FUNCTION__);
 		mmc->caps &= ~MMC_CAP_NEEDS_POLL;
         }
-#endif
 		mmc_detect_change(host->mmc, 0);
 	} else {
 		mmc->caps &= ~MMC_CAP_NEEDS_POLL;
@@ -1861,6 +1856,7 @@ static int msmsdcc_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_PM
 #ifdef CONFIG_HUAWEI_WIFI_SDCC
 struct msmsdcc_host *wlan_host;
 
@@ -1902,8 +1898,6 @@ EXPORT_SYMBOL(msmsdcc_disable_wlan_slot);
 EXPORT_SYMBOL(msmsdcc_enable_wlan_slot);
 #endif
 
-#ifdef CONFIG_PM
-
 static int
 msmsdcc_suspend(struct platform_device *dev, pm_message_t state)
 {
@@ -1911,23 +1905,11 @@ msmsdcc_suspend(struct platform_device *dev, pm_message_t state)
 	struct msmsdcc_host *host = mmc_priv(mmc);
 	int rc = 0;
 
-	printk(KERN_INFO "Enter msmsdcc_suspend: \n");
-
 #ifdef CONFIG_MMC_AUTO_SUSPEND
 	if (test_and_set_bit(0, &host->suspended))
 		return 0;
 #endif
 	if (mmc) {
-#ifdef CONFIG_HUAWEI_WIFI_SDCC
-		msmsdcc_wlan_pwr_ctrl = msmsdcc_wlan_pwr_ctrl_new;
-		if ((host->pdev_id == SDCC_WIFI_SLOT) && !wifi_chip_is_bcm && (msmsdcc_wlan_pwr_ctrl != WLAN_PWR_CTRL_CUT_PWR)) {
-			printk("%s: WLAN slot with non-cut-power case\n", __func__);
-			wlan_host = host;
-	printk(KERN_INFO "msmsdcc_suspend: host is backup to wlan_host\n");
-			return 0;
-		}
-#endif
-
 		if (host->plat->status_irq)
 			disable_irq(host->plat->status_irq);
 
@@ -1947,7 +1929,6 @@ msmsdcc_suspend(struct platform_device *dev, pm_message_t state)
 		if (host->plat->sdiowakeup_irq)
 			enable_irq(host->plat->sdiowakeup_irq);
 	}
-	printk(KERN_INFO "Leave msmsdcc_suspend: \n");
 	return rc;
 }
 
@@ -1957,7 +1938,6 @@ msmsdcc_resume(struct platform_device *dev)
 	struct mmc_host *mmc = mmc_get_drvdata(dev);
 	struct msmsdcc_host *host = mmc_priv(mmc);
 	unsigned long flags;
-	printk(KERN_INFO "Enter msmsdcc_resume: \n");
 
 #ifdef CONFIG_MMC_AUTO_SUSPEND
 	if (!test_and_clear_bit(0, &host->suspended))
@@ -1985,7 +1965,6 @@ msmsdcc_resume(struct platform_device *dev)
 			enable_irq(host->plat->status_irq);
 
 	}
-	printk(KERN_INFO "Leave msmsdcc_resume: \n");
 	return 0;
 }
 #else
@@ -2034,19 +2013,19 @@ int enable_wlan_power(int enable)
 		vreg= vreg_get(0, WLAN_1_8V_ID);
 		if (!vreg)
 		{
-			printk( KERN_ERR "%s: 1.8V voltage level vreg_get failed\n", __func__);
+			//printk( KERN_ERR "%s: 1.8V voltage level vreg_get failed\n", __func__);
 			return ret;
 		}
 		ret = vreg_set_level(vreg, 1800);
 		if (ret)
 		{
-			printk( KERN_ERR "%s: 1.8V voltage level  vreg_set_level failed(%d)\n", __func__, ret);
+			//printk( KERN_ERR "%s: 1.8V voltage level  vreg_set_level failed(%d)\n", __func__, ret);
 			return ret;
 		}
 		ret = vreg_enable(vreg);
 		if (ret)
 		{
-			printk( KERN_ERR "%s: 1.8V voltage enable failed(%d)\n", __func__, ret);
+			//printk( KERN_ERR "%s: 1.8V voltage enable failed(%d)\n", __func__, ret);
 			return ret;
 		}
 		mdelay(5);        // WLAN 1.2 up
@@ -2075,7 +2054,7 @@ int enable_wlan_power(int enable)
                                      MPP_CFG(MPP_DLOGIC_LVL_MSMP, MPP_DLOGIC_OUT_CTRL_HIGH));  
         if (ret) 
         {
-            printk(KERN_ERR "%s: wlan chip down mpp_wlan_chip_down failed to pull up(%d)\n",__func__, ret);
+            //printk(KERN_ERR "%s: wlan chip down mpp_wlan_chip_down failed to pull up(%d)\n",__func__, ret);
             return ret;
         }
         printk(KERN_DEBUG "%s: wlan chip down successed to pull up\n",__func__);
@@ -2089,7 +2068,7 @@ int enable_wlan_power(int enable)
                                      MPP_CFG(MPP_DLOGIC_LVL_MSMP, MPP_DLOGIC_OUT_CTRL_LOW));  /* pull up */
         if (ret) 
         {
-            printk(KERN_ERR "%s: wlan chip down mpp_wlan_chip_down failed to pull down(%d)\n",__func__, ret);
+            //printk(KERN_ERR "%s: wlan chip down mpp_wlan_chip_down failed to pull down(%d)\n",__func__, ret);
             return ret;
         }
         else
@@ -2104,7 +2083,7 @@ int enable_wlan_power(int enable)
                                      MPP_CFG(MPP_DLOGIC_LVL_MSME, MPP_DLOGIC_OUT_CTRL_LOW));  /* pull high */
         if (ret) 
         {
-            printk(KERN_ERR "%s: 1.2V voltage level mpp_config_digital_out failed to down(%d)\n",__func__, ret);
+            //printk(KERN_ERR "%s: 1.2V voltage level mpp_config_digital_out failed to down(%d)\n",__func__, ret);
             return ret;
         }
         printk(KERN_DEBUG "%s: 1.2V voltage level pull down\n",__func__);
@@ -2115,7 +2094,7 @@ int enable_wlan_power(int enable)
         ret = vreg_disable(vreg);
         if (ret)
         {
-            printk( KERN_ERR "%s: 1.8V voltage level diable failed(%d)\n", __func__, ret);
+            //printk( KERN_ERR "%s: 1.8V voltage level diable failed(%d)\n", __func__, ret);
             return ret;
         }
         

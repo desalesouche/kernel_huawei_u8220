@@ -65,6 +65,10 @@
 #include "jogball_device.h"
 #endif
 
+#ifdef CONFIG_TOUCHSCREEN_MELFAS
+#include <linux/melfas_i2c_ts.h>
+#endif
+
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI_TM1319
 #include <linux/synaptics_i2c_rmi.h>
 #endif
@@ -160,7 +164,13 @@ static struct i2c_board_info i2c_devices[] = {
 	},
 #endif
 
-//
+#ifdef CONFIG_TOUCHSCREEN_MELFAS
+	{
+		I2C_BOARD_INFO(MELFAS_I2C_NAME, 0x22),
+		.irq = MSM_GPIO_TO_INT(57)  /*gpio 57 is interupt for touchscreen.*/
+	},
+#endif
+
 #ifdef CONFIG_ACCELEROMETER_ADXL345
 	{
 		I2C_BOARD_INFO("GS", 0xA6 >> 1),
@@ -185,7 +195,6 @@ static struct i2c_board_info i2c_devices[] = {
 		.irq = MSM_GPIO_TO_INT(88)
 	}
 #endif
-//
 
 };
 
@@ -546,6 +555,18 @@ static void __init msm_device_i2c_init(void)
 
 static void __init halibut_init(void)
 {
+#ifdef CONFIG_TOUCHSCREEN_MELFAS
+    int ret;
+    unsigned mpp_ts_reset = 13;
+
+    ret = mpp_config_digital_out(mpp_ts_reset,
+          MPP_CFG(MPP_DLOGIC_LVL_MSMP,MPP_DLOGIC_OUT_CTRL_LOW));
+    if (ret)
+    {
+        printk(KERN_ERR "%s: Failed to configure mpp (%d)\n",__func__, ret);
+    }
+#endif
+
 #ifdef CONFIG_HUAWEI_CAMERA
     sensor_vreg_disable(sensor_vreg_array,ARRAY_SIZE(sensor_vreg_array));
 #endif
