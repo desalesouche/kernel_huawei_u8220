@@ -156,7 +156,7 @@ static enum hrtimer_restart melfas_ts_timer_func(struct hrtimer *timer)
 static irqreturn_t melfas_ts_irq_handler(int irq, void *dev_id)
 {
 	struct melfas_ts_data *ts = dev_id;
-	disable_irq(ts->client->irq);
+	disable_irq_nosync(ts->client->irq);
  	MELFAS_DEBUG("melfas_ts_irq_handler,disable irq\n");
 	queue_work(melfas_wq, &ts->work);
 	return IRQ_HANDLED;
