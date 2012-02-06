@@ -601,6 +601,9 @@ static void __init halibut_init(void)
 // remained
 	msm_hsusb_pdata.soc_version = socinfo_get_version();
 #endif
+#ifdef CONFIG_USB_AUTO_INSTALL
+	proc_usb_para();
+#endif
 #ifdef CONFIG_USB_MSM_OTG_72K
 	msm_device_otg.dev.platform_data = &msm_otg_pdata;
 /* //from 7x25
