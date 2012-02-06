@@ -405,10 +405,12 @@ static struct platform_device *devices[] __initdata = {
 	&msm_device_gadget_peripheral,
 #endif
 #endif
-// remains?
+
+#ifdef CONFIG_USB_FUNCTION
+//was only on halibut board in .29 pulse kernel. Defined in devices.c. Referenced by name in usb/function/msm_otg.c
 	&msm_device_hsusb_otg,
+//its data is defined under #ifdef CONFIG_USB_FUNCTION on 7x25 board and the data is only for msm_device_hsusb_peripheral
 	&msm_device_hsusb_host,
-#if defined(CONFIG_USB_FUNCTION) || defined(CONFIG_USB_ANDROID)
 	&msm_device_hsusb_peripheral,
 #endif
 #ifdef CONFIG_USB_FUNCTION
@@ -595,8 +597,10 @@ static void __init halibut_init(void)
 	msm_serial_debug_init(MSM_UART3_PHYS, INT_UART3,
 			      &msm_device_uart3.dev, 1);
 #endif
+#ifdef CONFIG_USB_FUNCTION
 // remained
 	msm_hsusb_pdata.soc_version = socinfo_get_version();
+#endif
 #ifdef CONFIG_USB_MSM_OTG_72K
 	msm_device_otg.dev.platform_data = &msm_otg_pdata;
 /* //from 7x25
@@ -620,10 +624,12 @@ static void __init halibut_init(void)
 	config_camera_off_gpios(); /* might not be necessary */
 #endif
 	i2c_register_board_info(0, i2c_devices, ARRAY_SIZE(i2c_devices));
+#ifdef CONFIG_USB_FUNCTION
 // remained
 	msm_device_hsusb_peripheral.dev.platform_data = &msm_hsusb_pdata,
 	msm_device_hsusb_host.dev.platform_data = &msm_hsusb_pdata,
 //
+#endif
 
 	platform_add_devices(devices, ARRAY_SIZE(devices));
 	msm_device_i2c_init();

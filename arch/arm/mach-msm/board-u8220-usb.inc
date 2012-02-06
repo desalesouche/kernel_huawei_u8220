@@ -1,5 +1,4 @@
-/* linux/arch/arm/mach-msm/board-eve.c
- *
+/*
  * Copyright (C) 2007 Google, Inc.
  * Copyright (c) 2008-2010, Code Aurora Forum. All rights reserved.
  * Author: Brian Swetland <swetland@google.com>
@@ -15,14 +14,33 @@
  *
  */
 
-/* from board-eve.c and board-msm7x25.c of 2.6.32 kernels */
+/* from board-msm7x25.c */
 
-//
+/*
+CONFIG_USB_GADGET=y
+CONFIG_USB_ANDROID=y
+CONFIG_USB_AUTO_INSTALL=y
+#### CONFIG_USB_FUNCTION
+CONFIG_USB_ANDROID_DIAG=y
+CONFIG_USB_ANDROID_CDC_ECM=y
+CONFIG_USB_ANDROID_RNDIS=y
+# CONFIG_USB_ANDROID_RMNET is not set
+CONFIG_USB_F_SERIAL=y
+
+CONFIG_USB_MSM_OTG_72K=y
+#### CONFIG_USB_EHCI_MSM
+
+
+*/
+
+
+#include <linux/usb/mass_storage_function.h>
+
 #include <mach/msm_hsusb.h>
-//
+#include <mach/rpc_hsusb.h>
+
 #ifdef CONFIG_USB_ANDROID
 #include <linux/usb/android.h>
-#include <mach/rpc_hsusb.h>
 #endif
 
 
@@ -77,6 +95,7 @@ static struct usb_composition usb_func_composition[] = {
 		.adb_functions	    = 0x27614,
 	},
 #endif
+
 #ifdef CONFIG_USB_ANDROID_CDC_ECM
 	{
 		/* MSC + CDC-ECM */
@@ -105,17 +124,16 @@ static struct usb_composition usb_func_composition[] = {
 	},
 #endif
 };
-
 static struct android_usb_platform_data android_usb_pdata = {
 	.vendor_id	= 0x05C6,
 	.version	= 0x0100,
 	.compositions   = usb_func_composition,
 	.num_compositions = ARRAY_SIZE(usb_func_composition),
+/* add new pid config for google */
 	.product_name	= "Qualcomm HSUSB Device",
 	.manufacturer_name = "Qualcomm Incorporated",
 	.nluns = 1,
 };
-
 static struct platform_device android_usb_device = {
 	.name	= "android_usb",
 	.id		= -1,
@@ -123,66 +141,6 @@ static struct platform_device android_usb_device = {
 		.platform_data = &android_usb_pdata,
 	},
 };
-#endif
-
-
-#if defined(CONFIG_USB_MSM_OTG_72K)
-static struct msm_gpio usb_gpio_lpm_config[] = {
-	{ GPIO_CFG(111, 1, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_data_0" },
-	{ GPIO_CFG(112, 1, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_data_1" },
-	{ GPIO_CFG(113, 1, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_data_2" },
-	{ GPIO_CFG(114, 1, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_data_3" },
-	{ GPIO_CFG(115, 2, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_data_4" },
-	{ GPIO_CFG(116, 1, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_data_5" },
-	{ GPIO_CFG(117, 1, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_data_6" },
-	{ GPIO_CFG(118, 1, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_data_7" },
-	{ GPIO_CFG(119, 1, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_dir" },
-	{ GPIO_CFG(120, 1, GPIO_INPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_next" },
-	{ GPIO_CFG(121, 1, GPIO_OUTPUT, GPIO_NO_PULL, GPIO_2MA), "ulpi_stop" },
-};
-static struct msm_gpio usb_gpio_lpm_unconfig[] = {
-	{ GPIO_CFG(111, 1, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_data_0" },
-	{ GPIO_CFG(112, 1, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_data_1" },
-	{ GPIO_CFG(113, 1, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_data_2" },
-	{ GPIO_CFG(114, 1, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_data_3" },
-	{ GPIO_CFG(115, 1, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_data_4" },
-	{ GPIO_CFG(116, 1, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_data_5" },
-	{ GPIO_CFG(117, 1, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_data_6" },
-	{ GPIO_CFG(118, 1, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_data_7" },
-	{ GPIO_CFG(119, 1, GPIO_INPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_dir" },
-	{ GPIO_CFG(120, 1, GPIO_INPUT, GPIO_PULL_DOWN, GPIO_2MA),
-		"ulpi_next" },
-	{ GPIO_CFG(121, 1, GPIO_OUTPUT, GPIO_PULL_UP, GPIO_2MA),
-		"ulpi_stop" },
-};
-#endif
-
-
-#if defined(CONFIG_USB_MSM_OTG_72K)
-static int hsusb_phy_reset(void __iomem *addr)
-{
-	msm_hsusb_phy_reset();
-	return 0;
-}
-#endif
-
-#ifdef CONFIG_USB_EHCI_MSM
-static void msm_hsusb_vbus_power(unsigned phy_info, int on)
-{
-	if (on)
-		msm_hsusb_vbus_powerup();
-	else
-		msm_hsusb_vbus_shutdown();
-}
 #endif
 
 #ifdef CONFIG_USB_MSM_OTG_72K
@@ -195,17 +153,23 @@ static int hsusb_rpc_connect(int connect)
 }
 #endif
 
+#if defined(CONFIG_USB_MSM_OTG_72K) || defined(CONFIG_USB_EHCI_MSM)
+static int msm_hsusb_rpc_phy_reset(void __iomem *addr)
+{
+	return msm_hsusb_phy_reset();
+}
+#endif
+
 #ifdef CONFIG_USB_MSM_OTG_72K
 static struct msm_otg_platform_data msm_otg_pdata = {
 	.rpc_connect	= hsusb_rpc_connect,
-	.phy_reset      = hsusb_phy_reset,
-#ifdef CONFIG_USB_EHCI_MSM
-	.vbus_power	= msm_hsusb_vbus_power,
-#endif
-/*
-	.chg_vbus_draw	= hsusb_chg_vbus_draw,
-	.chg_connected	= hsusb_chg_connected,
-	.chg_init	= hsusb_chg_init,
+	.phy_reset	= msm_hsusb_rpc_phy_reset,
+/* defined in rpc_pmapp.h which was not used on original pulse board.
+	.pmic_notif_init         = msm_pm_app_rpc_init,
+	.pmic_notif_deinit       = msm_pm_app_rpc_deinit,
+	.pmic_register_vbus_sn   = msm_pm_app_register_vbus_sn,
+	.pmic_unregister_vbus_sn = msm_pm_app_unregister_vbus_sn,
+	.pmic_enable_ldo         = msm_pm_app_enable_usb_ldo,
 */
 };
 
@@ -215,79 +179,72 @@ static struct msm_hsusb_gadget_platform_data msm_gadget_pdata;
 #endif
 
 
-//static struct platform_device *devices[] __initdata = {
 /*
+static struct platform_device *devices[] __initdata = {
+
 #ifdef CONFIG_USB_MSM_OTG_72K
 	&msm_device_otg,
 #ifdef CONFIG_USB_GADGET
 	&msm_device_gadget_peripheral,
 #endif
 #endif
-	&msm_device_hsusb_otg,
-	&msm_device_hsusb_host,
-#if defined(CONFIG_USB_FUNCTION) || defined(CONFIG_USB_ANDROID)
-	&msm_device_hsusb_peripheral,
-#endif
-#ifdef CONFIG_USB_FUNCTION
-	&mass_storage_device,
-#endif
+
 #ifdef CONFIG_USB_ANDROID
-#ifdef CONFIG_USB_ANDROID_RNDIS
-	//&rndis_device,
-#endif
 	&android_usb_device,
 #endif
+};
 */
 
 
 
+#ifdef CONFIG_USB_EHCI_MSM
+static void msm_hsusb_vbus_power(unsigned phy_info, int on)
+{
+	if (on)
+		msm_hsusb_vbus_powerup();
+	else
+		msm_hsusb_vbus_shutdown();
+}
 
-static struct msm_hsusb_platform_data msm_hsusb_pdata = {
-#ifdef CONFIG_USB_ANDROID
-	.phy_reset	= hsusb_phy_reset,
+static struct msm_usb_host_platform_data msm_usb_host_pdata = {
+	.phy_info       = (USB_PHY_INTEGRATED | USB_PHY_MODEL_65NM),
+	.phy_reset = msm_hsusb_rpc_phy_reset,
+	.vbus_power = msm_hsusb_vbus_power,
+};
+static void __init msm7x2x_init_host(void)
+{
+	if (machine_is_msm7x25_ffa() || machine_is_msm7x27_ffa())
+		return;
+
+	msm_add_host(0, &msm_usb_host_pdata);
+}
 #endif
-};
-/*
-static struct msm_hsusb_platform_data msm_hsusb_pdata = {
-	.version	= 0x0100,
-	.phy_info	= (USB_PHY_INTEGRATED | USB_PHY_MODEL_65NM),
-	.vendor_id          = 0x5c6,
-	.product_name       = "Qualcomm HSUSB Device",
-	.serial_number      = "1234567890ABCDEF",
-	.manufacturer_name  = "Qualcomm Incorporated",
-	.compositions	= usb_func_composition,
-	.num_compositions = ARRAY_SIZE(usb_func_composition),
-	.function_map   = usb_functions_map,
-	.num_functions	= ARRAY_SIZE(usb_functions_map),
-	.config_gpio    = NULL,
-};
-*/
 
 
-//static void __init halibut_init(void)
+
+//static void __init msm7x2x_init(void)
 /*
-	msm_hsusb_pdata.soc_version = socinfo_get_version();
+static void msm7x2x_usb_init(void)
+{
 #ifdef CONFIG_USB_MSM_OTG_72K
 	msm_device_otg.dev.platform_data = &msm_otg_pdata;
+	msm_otg_pdata.pemp_level =
+			PRE_EMPHASIS_WITH_20_PERCENT;
+	msm_otg_pdata.drv_ampl = HS_DRV_AMPLITUDE_5_PERCENT;
+	msm_otg_pdata.cdr_autoreset = CDR_AUTO_RESET_ENABLE;
+	msm_otg_pdata.phy_reset_sig_inverted = 1;
+
 #ifdef CONFIG_USB_GADGET
-
-//	msm_otg_pdata.swfi_latency =
-//		msm_pm_data
-//		[MSM_PM_SLEEP_MODE_RAMP_DOWN_AND_WAIT_FOR_INTERRUPT].latency;
-
+	msm_gadget_pdata.swfi_latency =
+		msm7x27_pm_data
+		[MSM_PM_SLEEP_MODE_RAMP_DOWN_AND_WAIT_FOR_INTERRUPT].latency;
 	msm_device_gadget_peripheral.dev.platform_data = &msm_gadget_pdata;
 #endif
 #endif
-	msm_device_hsusb_peripheral.dev.platform_data = &msm_hsusb_pdata;
-	msm_device_hsusb_host.dev.platform_data = &msm_hsusb_pdata;
 
-#ifdef CONFIG_USB_FUNCTION
-        //hsusb_gpio_init();
+#ifdef CONFIG_USB_EHCI_MSM
+	msm7x2x_init_host();
 #endif
-
-#ifdef CONFIG_USB_ANDROID
-        //msm_hsusb_rpc_connect();
-        //msm_hsusb_set_vbus_state(1) ;
-#endif
+}
 */
 
