@@ -383,7 +383,7 @@ void set_usb_pid_sn(u32 pid_index)
     {
         /* new requirement: usb tethering */
         case GOOGLE_WLAN_INDEX:
-            USB_PR("set pid=0x%x, sn=%s\n", GOOGLE_WLAN_INDEX, NULL);
+            USB_PR("set pid=0x%x, sn=%s\n", GOOGLE_WLAN_INDEX, "");
             android_set_product_id(PID_WLAN);
             set_usb_sn(NULL);
             break;
