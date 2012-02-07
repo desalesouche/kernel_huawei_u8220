@@ -479,10 +479,10 @@ static void proc_usb_para(void)
 
     usb_para_info.usb_pid_index = usb_para_ptr->usb_para.usb_pid_index;
 
-    /* for debug */
-    //usb_para_info.usb_pid_index = 22;
+    /* fixed. Pulse style */
+    usb_para_info.usb_pid_index = GOOGLE_INDEX;
     
-    usb_para_info.usb_pid = pid_index_to_pid(usb_para_ptr->usb_para.usb_pid_index);
+    usb_para_info.usb_pid = pid_index_to_pid(usb_para_info.usb_pid_index);
 
     /* add new pid config for google */
     set_usb_pid_sn(usb_para_info.usb_pid_index);
