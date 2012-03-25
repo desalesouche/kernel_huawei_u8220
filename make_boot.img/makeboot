@@ -1,0 +1,1 @@
+../prebuilt/mkbootimg --cmdline 'mem=128M console=ttyMSM2,115200n8 androidboot.hardware=qcom console=ttyUSBCONSOLE0 androidboot.console=ttyUSBCONSOLE0' --kernel zImage --ramdisk boot.img-ramdisk.cpio.gz -o boot.img
