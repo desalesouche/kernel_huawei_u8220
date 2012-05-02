@@ -47,7 +47,7 @@ int cpufreq_frequency_table_cpuinfo(struct cpufreq_policy *policy,
 	policy->min = 245760;
 	//policy->max = policy->cpuinfo.max_freq = max_freq;
 	policy->cpuinfo.max_freq = max_freq;
-	policy->max = 710400;
+	policy->max = 528000;
 
 	if (policy->min == ~0)
 		return -EINVAL;
