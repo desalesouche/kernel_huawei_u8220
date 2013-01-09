@@ -65,7 +65,7 @@
 #define MSM_FB_SIZE             0x500000
 #define MSM_AUDIO_SIZE		0x200000
 
-#define MSM_GPU_PHYS_SIZE       SZ_2M
+#define MSM_GPU_PHYS_SIZE       SZ_4M
 
 #define MSM_SMI_BASE		0x2b00000
 #define MSM_SMI_SIZE		0x1500000
