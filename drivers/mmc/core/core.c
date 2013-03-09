@@ -69,10 +69,6 @@ static int mmc_schedule_delayed_work(struct delayed_work *work,
 	wake_lock(&mmc_delayed_work_wake_lock);
 #endif
 
-static int mmc_schedule_delayed_work_lock(struct delayed_work *work,
-				     unsigned long delay)
-{
-	wake_lock(&mmc_delayed_work_wake_lock);
 	return queue_delayed_work(workqueue, work, delay);
 }
 
@@ -1070,17 +1066,8 @@ void mmc_detect_change(struct mmc_host *host, unsigned long delay)
 	WARN_ON(host->removed);
 	spin_unlock_irqrestore(&host->lock, flags);
 #endif
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 	mmc_schedule_delayed_work(&host->detect, delay);
-=======
-	wake_lock(&mmc_delayed_work_wake_lock);
-=======
-
->>>>>>> parent of efcdbc7... Fixed wakelock usage for delayed work in MMC driver
-	mmc_schedule_delayed_work_lock(&host->detect, delay);
->>>>>>> efcdbc7... Fixed wakelock usage for delayed work in MMC driver
 }
 
 EXPORT_SYMBOL(mmc_detect_change);
