@@ -1517,18 +1517,18 @@ static const struct reg_init {
 	uint32_t val;
 } ri_list[] __initconst = {
 	/* Enable UMDX_P clock. Known to causes issues, so never turn off. */
-	{REG(GLBL_CLK_ENA_2_SC), B(2), B(2)},
+	{REG(GLBL_CLK_ENA_2_SC), BIT(2), BIT(2)},
 
 	{REG(EMDH_NS), BM(18, 17) , BVAL(18, 17, 0x3)}, /* RX div = div-4. */
 	{REG(PMDH_NS), BM(18, 17), BVAL(18, 17, 0x3)}, /* RX div = div-4. */
 	/* MI2S_CODEC_RX_S src = MI2S_CODEC_RX_M. */
-	{REG(MI2S_RX_NS), B(14), 0x0},
+	{REG(MI2S_RX_NS), BIT(14), 0x0},
 	/* MI2S_CODEC_TX_S src = MI2S_CODEC_TX_M. */
-	{REG(MI2S_TX_NS), B(14), 0x0},
-	{REG(MI2S_NS), B(14), 0x0}, /* MI2S_S src = MI2S_M. */
+	{REG(MI2S_TX_NS), BIT(14), 0x0},
+	{REG(MI2S_NS), BIT(14), 0x0}, /* MI2S_S src = MI2S_M. */
 	/* Allow DSP to decide the LPA CORE src. */
-	{REG(LPA_CORE_CLK_MA0), B(0), B(0)},
-	{REG(LPA_CORE_CLK_MA2), B(0), B(0)},
+	{REG(LPA_CORE_CLK_MA0), BIT(0), B(0)},
+	{REG(LPA_CORE_CLK_MA2), BIT(0), B(0)},
 	{REG(0x02EC), 0xF, 0xD}, /* MI2S_CODEC_RX_S div = div-8. */
 	{REG(0x02F0), 0xF, 0xD}, /* MI2S_CODEC_TX_S div = div-8. */
 	{REG(0x02E4), 0xF, 0x7}, /* MI2S_S div = div-8. */
@@ -1542,9 +1542,9 @@ static const struct reg_init {
 	{REG(TV_NS), BM(15, 14), 0x0}, /* tv_clk_src_div2 = div-1 */
 
 	/* USBH core clocks src = USB_HS_SRC. */
-	{REG(USBH_NS), B(15), B(15)},
-	{REG(USBH2_NS), B(6), B(6)},
-	{REG(USBH3_NS), B(6), B(6)},
+	{REG(USBH_NS), BIT(15), BIT(15)},
+	{REG(USBH2_NS), BIT(6), BIT(6)},
+	{REG(USBH3_NS), BIT(6), BIT(6)},
 };
 
 void __init msm_clk_soc_set_ops(struct clk *clk)
