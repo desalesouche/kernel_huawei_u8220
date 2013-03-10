@@ -760,13 +760,6 @@ static int fat_ioctl_readdir(struct inode *inode, struct file *filp,
 
 static int fat_ioctl_volume_id(struct inode *dir)
 {
-        struct super_block *sb = dir->i_sb;
-        struct msdos_sb_info *sbi = MSDOS_SB(sb);
-        return sbi->vol_id;
-}
-
-static int fat_ioctl_volume_id(struct inode *dir)
-{
 	struct super_block *sb = dir->i_sb;
 	struct msdos_sb_info *sbi = MSDOS_SB(sb);
 	return sbi->vol_id;
