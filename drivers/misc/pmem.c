@@ -208,15 +208,9 @@ struct pmem_info {
 	struct kobject kobj;
 
 	/* for debugging, creates a list of pmem file structs, the
-<<<<<<< HEAD
 	 * data_list_mutex should be taken before pmem_data->sem if both are
 	 * needed */
 	struct mutex data_list_mutex;
-=======
-	 * data_list_sem should be taken before pmem_data->sem if both are
-	 * needed */
-	struct semaphore data_list_sem;
->>>>>>> parent of b76ff59... Update pmem
 	struct list_head data_list;
 	/* arena_mutex protects the global allocation arena
 	 *
@@ -792,7 +786,6 @@ static int pmem_release(struct inode *inode, struct file *file)
 	struct list_head *elt, *elt2;
 	int id = get_id(file), ret = 0;
 
-<<<<<<< HEAD
 #if PMEM_DEBUG_MSGS
 	char currtask_name[FIELD_SIZEOF(struct task_struct, comm) + 1];
 #endif
@@ -800,10 +793,6 @@ static int pmem_release(struct inode *inode, struct file *file)
 		current->pid, get_task_comm(currtask_name, current),
 		file, file_count(file), get_name(file), id);
 	mutex_lock(&pmem[id].data_list_mutex);
-=======
-
-	down(&pmem[id].data_list_sem);
->>>>>>> parent of b76ff59... Update pmem
 	/* if this file is a master, revoke all the memory in the connected
 	 *  files */
 	if (PMEM_FLAGS_MASTERMAP & data->flags) {
@@ -822,12 +811,7 @@ static int pmem_release(struct inode *inode, struct file *file)
 		}
 	}
 	list_del(&data->list);
-<<<<<<< HEAD
 	mutex_unlock(&pmem[id].data_list_mutex);
-=======
-	up(&pmem[id].data_list_sem);
-
->>>>>>> parent of b76ff59... Update pmem
 
 	down_write(&data->sem);
 
@@ -902,15 +886,9 @@ static int pmem_open(struct inode *inode, struct file *file)
 	file->private_data = data;
 	INIT_LIST_HEAD(&data->list);
 
-<<<<<<< HEAD
 	mutex_lock(&pmem[id].data_list_mutex);
 	list_add(&data->list, &pmem[id].data_list);
 	mutex_unlock(&pmem[id].data_list_mutex);
-=======
-	down(&pmem[id].data_list_sem);
-	list_add(&data->list, &pmem[id].data_list);
-	up(&pmem[id].data_list_sem);
->>>>>>> parent of b76ff59... Update pmem
 	return ret;
 }
 
@@ -1001,22 +979,6 @@ out:
 	return best_fit;
 }
 
-<<<<<<< HEAD
-=======
-static pgprot_t phys_mem_access_prot(struct file *file, pgprot_t vma_prot)
-{
-	int id = get_id(file);
-#ifdef pgprot_noncached
-	if (pmem[id].cached == 0 || file->f_flags & O_SYNC)
-		return pgprot_noncached(vma_prot);
-#endif
-#ifdef pgprot_ext_buffered
-	else if (pmem[id].buffered)
-		return pgprot_ext_buffered(vma_prot);
-#endif
-	return vma_prot;
-}
->>>>>>> parent of b76ff59... Update pmem
 
 static inline unsigned long paddr_from_bit(const int id, const int bitnum)
 {
@@ -1522,12 +1484,8 @@ static int pmem_mmap(struct file *file, struct vm_area_struct *vma)
 		goto error;
 	}
 
-<<<<<<< HEAD
 	vma->vm_pgoff = pmem[id].start_addr(id, data) >> PAGE_SHIFT;
 
-=======
-	vma->vm_pgoff = pmem_start_addr(id, data) >> PAGE_SHIFT;
->>>>>>> parent of b76ff59... Update pmem
 	vma->vm_page_prot = phys_mem_access_prot(file, vma->vm_page_prot);
 
 	if (data->flags & PMEM_FLAGS_CONNECTED) {
@@ -2116,10 +2074,7 @@ lock_mm:
 	 * once */
 	if (PMEM_IS_SUBMAP(data) && !mm) {
 		pmem_unlock_data_and_mm(data, mm);
-<<<<<<< HEAD
 		DLOG("mapping contention, repeating mmap op\n");
-=======
->>>>>>> parent of b76ff59... Update pmem
 		goto lock_mm;
 	}
 	/* now check that vma.mm is still there, it could have been
@@ -2546,7 +2501,6 @@ static int active_unstable_pmem(void)
 			return 1;
 	}
 
-<<<<<<< HEAD
 	return 0;
 }
 
@@ -2595,24 +2549,8 @@ static void pmem_setup_unstable_devices(unsigned long start_pfn,
 				continue;
 			pmem[id].memory_state =
 				MEMORY_UNSTABLE_MEMORY_ALLOCATED;
-=======
-	down(&pmem[id].data_list_sem);
-	list_for_each(elt, &pmem[id].data_list) {
-		data = list_entry(elt, struct pmem_data, list);
-		down_read(&data->sem);
-		n += scnprintf(buffer + n, debug_bufmax - n, "pid %u:",
-				data->pid);
-		list_for_each(elt2, &data->region_list) {
-			region_node = list_entry(elt2, struct pmem_region_node,
-				      list);
-			n += scnprintf(buffer + n, debug_bufmax - n,
-					"(%lx,%lx) ",
-					region_node->region.offset,
-					region_node->region.len);
->>>>>>> parent of b76ff59... Update pmem
 		}
 	}
-<<<<<<< HEAD
 }
 
 static int pmem_mem_going_offline_callback(void *arg)
@@ -2630,9 +2568,6 @@ static int pmem_mem_going_offline_callback(void *arg)
 	}
 
 	unreserve_unstable_pmem(unstable_pmem_start, unstable_pmem_size);
-=======
-	up(&pmem[id].data_list_sem);
->>>>>>> parent of b76ff59... Update pmem
 
 	for (id = 0; id < id_count; id++) {
 		if (pmem[id].memory_state == MEMORY_UNSTABLE_MEMORY_ALLOCATED)
@@ -2792,19 +2727,7 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 	pmem[id].buffered = pdata->buffered;
 	pmem[id].base = pdata->start;
 	pmem[id].size = pdata->size;
-<<<<<<< HEAD
 	strlcpy(pmem[id].name, pdata->name, PMEM_NAME_SIZE);
-=======
-	pmem[id].ioctl = ioctl;
-	pmem[id].release = release;
-	init_rwsem(&pmem[id].bitmap_sem);
-	init_MUTEX(&pmem[id].data_list_sem);
-	INIT_LIST_HEAD(&pmem[id].data_list);
-	pmem[id].dev.name = pdata->name;
-	pmem[id].dev.minor = id;
-	pmem[id].dev.fops = &pmem_fops;
-	printk(KERN_INFO "%s: %d init\n", pdata->name, pdata->cached);
->>>>>>> parent of b76ff59... Update pmem
 
 	if (pdata->unstable) {
 		pmem[id].memory_state = MEMORY_UNSTABLE_NO_MEMORY_ALLOCATED;
