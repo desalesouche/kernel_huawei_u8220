@@ -229,7 +229,7 @@ int udisk_in_norm = 0;
 /* Delay time in second to initiate store_file() if failed in the last time   */
 #define STORE_FILE_DELAY            2
 /* the time(STORE_FILE_RETRY_NUM*STORE_FILE_DELAY) time is enough to store cdrom file */
-#define STORE_FILE_RETRY_NUM        25
+#define STORE_FILE_RETRY_NUM        2
 /* how many times have been tried to initiate store_file() */
 static int store_file_number = 0;
 /* add new pid config for google */
