@@ -20,5 +20,8 @@
 
 extern int update_tcp_snd(uid_t uid, int size);
 extern int update_tcp_rcv(uid_t uid, int size);
-
+int uid_stat_udp_snd(uid_t uid, int size);
+int uid_stat_udp_rcv(uid_t uid, int size);
+#define uid_stat_udp_snd(uid, size) do {} while (0);
+#define uid_stat_udp_rcv(uid, size) do {} while (0);
 #endif /* _LINUX_UID_STAT_H */
