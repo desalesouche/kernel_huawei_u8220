@@ -1595,7 +1595,7 @@ static struct mmc_platform_data msm7x2x_sdc1_data = {
 
 #ifdef CONFIG_MMC_MSM_SDC2_SUPPORT
 static struct mmc_platform_data msm7x2x_sdc2_data = {
-	.ocr_mask	= MMC_VDD_28_29,
+	.ocr_mask	= MMC_VDD_20_21,
 	.translate_vdd	= msm_sdcc_setup_power,
 	.mmc_bus_width  = MMC_CAP_4_BIT_DATA,
 #ifdef CONFIG_MMC_MSM_SDIO_SUPPORT
@@ -1818,7 +1818,7 @@ static void __init msm7x2x_init(void)
 	/* OEMs may modify the value at their discretion for performance */
 	/* The appropriate maximum replacement for 160000 is: */
 	/* clk_get_max_axi_khz() */
-	kgsl_pdata.high_axi_3d = 160000;
+	kgsl_pdata.high_axi_3d = clk_get_max_axi_khz();
 
 	/* 7x27 doesn't allow graphics clocks to be run asynchronously to */
 	/* the AXI bus */
