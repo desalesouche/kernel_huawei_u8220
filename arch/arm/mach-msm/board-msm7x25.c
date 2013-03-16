@@ -2297,7 +2297,16 @@ msm_i2c_gpio_config(int iface, int config_type)
 }
 
 static struct msm_i2c_platform_data msm_i2c_pdata = {
-	.clk_freq = 100000,
+   /*
+    * Commented by jia.jia, zh.shj
+    *
+    * Increase frequency of I2C clock from 100K to 400K (maximum value)
+    * in order to improve performances of startup and mode switch between
+    * preview and snapshot for camera ONLY
+    *
+    * Set frequency of I2C clock as 100K
+    */
+	.clk_freq = 400000,
 	.rmutex  = 0,
 	.pri_clk = 60,
 	.pri_dat = 61,
