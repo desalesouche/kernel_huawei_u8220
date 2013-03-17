@@ -191,7 +191,7 @@ static struct clkctl_acpu_speed pll0_245_pll1_960_pll2_1056[] = {
 /* 7x01/7x25 turbo with CDMA-only modem */
 static struct clkctl_acpu_speed pll0_196_pll1_960_pll2_1056[] = {
 	{ 0, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 24576 },
-	{ 1,  98304, ACPU_PLL_0, 4, 1,  49152, 1, 3,  24576 },
+	{ 1, 98304,  ACPU_PLL_0, 4, 1,  49152, 1, 3,  24576 },
 	{ 0, 120000, ACPU_PLL_1, 1, 7,  60000, 1, 3,  24576 },
 	{ 0, 176000, ACPU_PLL_2, 2, 5,  88000, 1, 3,  24576 },
 	{ 1, 196608, ACPU_PLL_0, 4, 0,  65536, 2, 4,  24576 },
@@ -207,7 +207,7 @@ static struct clkctl_acpu_speed pll0_196_pll1_960_pll2_1056[] = {
 	{ 1, 672000, ACPU_PLL_2, 2, 1, 132000, 3, 7, 128000 },
 	{ 1, 691200, ACPU_PLL_2, 2, 1, 132000, 3, 7, 128000 },
 	{ 1, 710400, ACPU_PLL_2, 2, 1, 132000, 3, 7, 128000 },
-	{ 1, 729600, ACPU_PLL_2, 2, 1, 132000, 3, 7, 128000 },
+	{ 1, 729600, ACPU_PLL_2, 2, 1, 132000, 3, 7, 132000 },
 	{ 1, 748800, ACPU_PLL_2, 2, 1, 132000, 3, 7, 128000 },
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0} }
 };
@@ -837,7 +837,7 @@ static void __init acpu_freq_tbl_fixup(void)
 
 		if (pll0_needs_fixup && t->pll == ACPU_PLL_0)
 			SLOWER_BY(t->a11clk_src_div, 2);
-		if (axi_160mhz && drv_state.max_axi_khz >= 160000
+		if (axi_160mhz && drv_state.max_axi_khz >= 200000
 		    && t->ahbclk_khz > 128000)
 			t->axiclk_khz = 160000;
 		if (axi_200mhz && drv_state.max_axi_khz >= 200000
@@ -846,7 +846,7 @@ static void __init acpu_freq_tbl_fixup(void)
 	}
 
 	t--;
-	drv_state.max_axi_khz = t->axiclk_khz;
+	drv_state.max_axi_khz = 160000;
 
 	/* The default 7x27 ACPU clock plan supports running the AXI bus at
 	 * 200 MHz. So we don't classify it as Turbo mode.

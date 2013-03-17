@@ -491,7 +491,7 @@ static struct msm_acpu_clock_platform_data halibut_clock_data = {
 	.acpu_switch_time_us = 50,
 	.max_speed_delta_khz = 256000,
 	.vdd_switch_time_us = 62,
-	.max_axi_khz = 128000,
+	.max_axi_khz = 132000,
 };
 
 void msm_serial_debug_init(unsigned int base, int irq,
@@ -529,7 +529,7 @@ msm_i2c_gpio_config(int iface, int config_type)
 }
 
 static struct msm_i2c_platform_data msm_i2c_pdata = {
-	.clk_freq = 100000,
+	.clk_freq = 400000,
 	.rmutex  = 0,
 	.pri_clk = 60,
 	.pri_dat = 61,
