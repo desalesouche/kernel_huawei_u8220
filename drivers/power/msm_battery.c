@@ -38,6 +38,10 @@
 #include <mach/msm_rpcrouter.h>
 #include <mach/msm_battery.h>
 
+#ifdef CONFIG_BLX
+#include <linux/blx.h>
+#endif
+
 #define BATTERY_RPC_PROG	0x30000089
 #define BATTERY_RPC_VER_1_1	0x00010001
 #define BATTERY_RPC_VER_2_1	0x00020001
