@@ -353,12 +353,6 @@ config PMIC8058_NFC
 	  Qualcomm PM8058 chip has a module to support NFC (Near Field
 	  Communication). This option enables the driver to support it.
 
-config BLX
-       bool "Support for Battery Life eXtender"
-       default y
-       help
-         Say Y here to enable Battery Life eXtender
-
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
