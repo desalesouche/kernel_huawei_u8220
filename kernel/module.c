@@ -2209,6 +2209,7 @@ static noinline struct module *load_module(void __user *umod,
 #else
 		err = -ENOEXEC;
 		goto free_hdr;
+#endif
 	}
 
 	staging = get_modinfo(sechdrs, infoindex, "staging");
