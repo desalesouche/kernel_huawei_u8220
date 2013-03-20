@@ -1469,9 +1469,10 @@ static int rcu_pending(int cpu)
 /*
  * Check to see if any future RCU-related work will need to be done
  * by the current CPU, even if none need be done immediately, returning
- * 1 if so. 
+ * 1 if so.  This function is part of the RCU implementation; it is -not-
+ * an exported member of the RCU API.
  */
-static int rcu_needs_cpu_quick_check(int cpu) 
+int rcu_needs_cpu(int cpu)
 {
 	/* RCU callbacks either ready or pending? */
 	return per_cpu(rcu_sched_data, cpu).nxtlist ||
