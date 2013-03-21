@@ -40,6 +40,9 @@ snd-soc-wm8988-objs := wm8988.o
 snd-soc-wm8990-objs := wm8990.o
 snd-soc-wm8993-objs := wm8993.o
 snd-soc-wm8994-objs := wm8994.o wm8994-tables.o wm8958-dsp2.o
+ifeq ($(CONFIG_SND_VOODOO),y)
+snd-soc-wm8994-objs += wm8994_voodoo.o
+endif
 snd-soc-wm9081-objs := wm9081.o
 snd-soc-wm9705-objs := wm9705.o
 snd-soc-wm9712-objs := wm9712.o
