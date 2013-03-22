@@ -417,6 +417,13 @@ HYPERVISOR_nmi_op(unsigned long op, unsigned long arg)
 	return _hypercall2(int, nmi_op, op, arg);
 }
 
+static inline int
+HYPERVISOR_tmem_op(
+        struct tmem_op *op)
+{
+        return _hypercall1(int, tmem_op, op);
+}
+
 static inline void
 MULTI_fpu_taskswitch(struct multicall_entry *mcl, int set)
 {
@@ -531,5 +538,26 @@ MULTI_stack_switch(struct multicall_entry *mcl,
 	mcl->args[0] = ss;
 	mcl->args[1] = esp;
 }
+
+#define TMEM_SPEC_VERSION 1
+
+struct tmem_op {
+        uint32_t cmd;
+        int32_t pool_id;
+        union {
+                struct { /* for cmd == TMEM_NEW_POOL */
+                        uint64_t uuid[2];
+                        uint32_t flags;
+                } new;
+                struct {
+                        uint64_t oid[3];
+                        uint32_t index;
+                        uint32_t tmem_offset;
+                        uint32_t pfn_offset;
+                        uint32_t len;
+                        GUEST_HANDLE(void) gmfn; /* guest machine page frame */
+                 } gen;
+	} u;
+};
 
 #endif /* _ASM_X86_XEN_HYPERCALL_H */
