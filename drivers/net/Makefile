@@ -291,3 +291,6 @@ obj-$(CONFIG_VIRTIO_NET) += virtio_net.o
 obj-$(CONFIG_SFC) += sfc/
 
 obj-$(CONFIG_WIMAX) += wimax/
+
+# small builtin driver bit
+obj-y += wl12xx_platform_data.o
