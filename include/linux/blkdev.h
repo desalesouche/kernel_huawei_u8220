@@ -31,8 +31,8 @@ struct blk_trace;
 struct request;
 struct sg_io_hdr;
 
-#define BLKDEV_MIN_RQ	4
-#define BLKDEV_MAX_RQ  512  /* Non-Default maximum (128) */
+#define BLKDEV_MIN_RQ  4 
+#define BLKDEV_MAX_RQ  256  /* Non-Default maximum (128) */
 
 struct request;
 typedef void (rq_end_io_fn)(struct request *, int);
