@@ -326,6 +326,16 @@ static const struct pipe_buf_operations anon_pipe_buf_ops = {
 	.get = generic_pipe_buf_get,
 };
 
+static const struct pipe_buf_operations packet_pipe_buf_ops = {
+       .can_merge = 0,
+       .map = generic_pipe_buf_map,
+       .unmap = generic_pipe_buf_unmap,
+       .confirm = generic_pipe_buf_confirm,
+       .release = anon_pipe_buf_release,
+       .steal = generic_pipe_buf_steal,
+       .get = generic_pipe_buf_get,
+};
+
 static ssize_t
 pipe_read(struct kiocb *iocb, const struct iovec *_iov,
 	   unsigned long nr_segs, loff_t pos)
