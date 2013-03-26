@@ -286,8 +286,8 @@ static struct twl4030_madc_platform_data sdp3430_madc_data = {
 /* VAUX1 for mainboard (irda and sub-lcd) */
 static struct regulator_init_data sdp3430_vaux1 = {
 	.constraints = {
-		.min_uV			= 2600000,
-		.max_uV			= 2600000,
+		.min_uV			= 2800000,
+		.max_uV			= 2800000,
 		.apply_uV		= true,
 		.valid_modes_mask	= REGULATOR_MODE_NORMAL
 					| REGULATOR_MODE_STANDBY,
@@ -312,8 +312,8 @@ static struct regulator_init_data sdp3430_vaux2 = {
 /* VAUX3 for LCD board */
 static struct regulator_init_data sdp3430_vaux3 = {
 	.constraints = {
-		.min_uV			= 2600000,
-		.max_uV			= 2600000,
+		.min_uV			= 2800000,
+		.max_uV			= 2800000,
 		.apply_uV		= true,
 		.valid_modes_mask	= REGULATOR_MODE_NORMAL
 					| REGULATOR_MODE_STANDBY,
