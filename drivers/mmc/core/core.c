@@ -38,15 +38,6 @@
 #include "sd_ops.h"
 #include "sdio_ops.h"
 
-#ifdef CONFIG_HUAWEI_WIFI_SDCC
-#include <asm/mach/mmc.h>
-#include <mach/dma.h>
-#include <linux/dma-mapping.h>
-#include <linux/earlysuspend.h>
-#include "../host/msm_sdcc.h"
-
-#define ATH_WLAN_SLOT		2
-#endif
 static struct workqueue_struct *workqueue;
 static struct wake_lock mmc_delayed_work_wake_lock;
 
@@ -64,11 +55,12 @@ module_param(use_spi_crc, bool, 0);
 static int mmc_schedule_delayed_work(struct delayed_work *work,
 				     unsigned long delay)
 {
+	return queue_delayed_work(workqueue, work, delay);
+}
 
-#ifndef CONFIG_HUAWEI_WIFI_SDCC
-	wake_lock(&mmc_delayed_work_wake_lock);
-#endif
-
+static int mmc_schedule_delayed_work_lock(struct delayed_work *work,
+				     unsigned long delay)
+{
 	return queue_delayed_work(workqueue, work, delay);
 }
 
@@ -302,7 +294,7 @@ void mmc_set_data_timeout(struct mmc_data *data, const struct mmc_card *card)
 			 * The limit is really 250 ms, but that is
 			 * insufficient for some crappy cards.
 			 */
-			limit_us = 300000;
+			limit_us = 3000000;
 		else
 			limit_us = 100000;
 
@@ -545,12 +537,10 @@ void mmc_host_deeper_disable(struct work_struct *work)
 
 	/* If the host is claimed then we do not want to disable it anymore */
 	if (!mmc_try_claim_host(host))
-		goto out;
+		return;
 	mmc_host_do_disable(host, 1);
 	mmc_do_release_host(host);
 
-out:
-	wake_unlock(&mmc_delayed_work_wake_lock);
 }
 
 /**
@@ -910,7 +900,12 @@ static void mmc_power_up(struct mmc_host *host)
 	 */
 	mmc_delay(10);
 
-	host->ios.clock = host->f_min;
+	if (host->f_min > 400000) {
+		pr_warning("%s: Minimum clock frequency too high for "
+				"identification mode\n", mmc_hostname(host));
+		host->ios.clock = host->f_min;
+	} else
+		host->ios.clock = 400000;
 
 	host->ios.power_mode = MMC_POWER_ON;
 	mmc_set_ios(host);
@@ -989,8 +984,7 @@ int mmc_resume_bus(struct mmc_host *host)
 		host->bus_ops->resume(host);
 	}
 
-	if (host->bus_ops->detect && !host->bus_dead)
-		host->bus_ops->detect(host);
+	mmc_detect_change(host, 0);
 
 	mmc_bus_put(host);
 	printk("%s: Deferred resume completed\n", mmc_hostname(host));
@@ -1066,8 +1060,8 @@ void mmc_detect_change(struct mmc_host *host, unsigned long delay)
 	WARN_ON(host->removed);
 	spin_unlock_irqrestore(&host->lock, flags);
 #endif
-
-	mmc_schedule_delayed_work(&host->detect, delay);
+	wake_lock(&mmc_delayed_work_wake_lock);
+	mmc_schedule_delayed_work_lock(&host->detect, delay);
 }
 
 EXPORT_SYMBOL(mmc_detect_change);
@@ -1080,6 +1074,16 @@ void mmc_rescan(struct work_struct *work)
 	u32 ocr;
 	int err;
 	int extend_wakelock = 0;
+	unsigned long flags;
+
+	spin_lock_irqsave(&host->lock, flags);
+
+	if (host->rescan_disable) {
+		spin_unlock_irqrestore(&host->lock, flags);
+		return;
+	}
+
+	spin_unlock_irqrestore(&host->lock, flags);
 
 	mmc_bus_get(host);
 
@@ -1159,20 +1163,19 @@ void mmc_rescan(struct work_struct *work)
 	mmc_power_off(host);
 
 out:
-	/* give userspace some time to react */
-#ifdef CONFIG_HUAWEI_WIFI_SDCC
-    wake_unlock(&mmc_delayed_work_wake_lock);
-#else
-	wake_lock_timeout(&mmc_delayed_work_wake_lock, HZ / 2);
-#endif
+	if (extend_wakelock)
+		wake_lock_timeout(&mmc_delayed_work_wake_lock, HZ / 2);
+	else
+		wake_unlock(&mmc_delayed_work_wake_lock);
+
 	if (host->caps & MMC_CAP_NEEDS_POLL)
-		mmc_schedule_delayed_work(&host->detect, HZ);
+		mmc_schedule_delayed_work_lock(&host->detect, HZ);
 }
 
 void mmc_start_host(struct mmc_host *host)
 {
 	mmc_power_off(host);
-	mmc_detect_change(host, 0);
+	mmc_detect_change(host, msecs_to_jiffies(host->init_delay));
 }
 
 void mmc_stop_host(struct mmc_host *host)
@@ -1186,8 +1189,12 @@ void mmc_stop_host(struct mmc_host *host)
 
 	if (host->caps & MMC_CAP_DISABLE)
 		cancel_delayed_work(&host->disable);
-	cancel_delayed_work(&host->detect);
+	if (cancel_delayed_work_sync(&host->detect))
+		wake_unlock(&mmc_delayed_work_wake_lock);
 	mmc_flush_scheduled_work();
+
+	/* clear pm flags now and let card drivers set them as needed */
+	host->pm_flags = 0;
 
 	mmc_bus_get(host);
 	if (host->bus_ops && !host->bus_dead) {
@@ -1207,37 +1214,45 @@ void mmc_stop_host(struct mmc_host *host)
 	mmc_power_off(host);
 }
 
-void mmc_power_save_host(struct mmc_host *host)
+int mmc_power_save_host(struct mmc_host *host)
 {
+	int ret = 0;
+
 	mmc_bus_get(host);
 
 	if (!host->bus_ops || host->bus_dead || !host->bus_ops->power_restore) {
 		mmc_bus_put(host);
-		return;
+		return -EINVAL;
 	}
 
 	if (host->bus_ops->power_save)
-		host->bus_ops->power_save(host);
+		ret = host->bus_ops->power_save(host);
 
 	mmc_bus_put(host);
 
 	mmc_power_off(host);
+
+	return ret;
 }
 EXPORT_SYMBOL(mmc_power_save_host);
 
-void mmc_power_restore_host(struct mmc_host *host)
+int mmc_power_restore_host(struct mmc_host *host)
 {
+	int ret;
+
 	mmc_bus_get(host);
 
 	if (!host->bus_ops || host->bus_dead || !host->bus_ops->power_restore) {
 		mmc_bus_put(host);
-		return;
+		return -EINVAL;
 	}
 
 	mmc_power_up(host);
-	host->bus_ops->power_restore(host);
+	ret = host->bus_ops->power_restore(host);
 
 	mmc_bus_put(host);
+
+	return ret;
 }
 EXPORT_SYMBOL(mmc_power_restore_host);
 
@@ -1297,29 +1312,18 @@ int mmc_suspend_host(struct mmc_host *host, pm_message_t state)
 
 	if (host->caps & MMC_CAP_DISABLE)
 		cancel_delayed_work(&host->disable);
-	cancel_delayed_work(&host->detect);
+	if (cancel_delayed_work_sync(&host->detect))
+		wake_unlock(&mmc_delayed_work_wake_lock);
 	mmc_flush_scheduled_work();
 
 	mmc_bus_get(host);
 	if (host->bus_ops && !host->bus_dead) {
 		if (host->bus_ops->suspend)
 			err = host->bus_ops->suspend(host);
-		if (err == -ENOSYS || !host->bus_ops->resume) {
-			/*
-			 * We simply "remove" the card in this case.
-			 * It will be redetected on resume.
-			 */
-			if (host->bus_ops->remove)
-				host->bus_ops->remove(host);
-			mmc_claim_host(host);
-			mmc_detach_bus(host);
-			mmc_release_host(host);
-			err = 0;
-		}
 	}
 	mmc_bus_put(host);
 
-	if (!err)
+	if (!err && !(host->pm_flags & MMC_PM_KEEP_POWER))
 		mmc_power_off(host);
 
 	return err;
@@ -1334,9 +1338,6 @@ EXPORT_SYMBOL(mmc_suspend_host);
 int mmc_resume_host(struct mmc_host *host)
 {
 	int err = 0;
-#ifdef CONFIG_HUAWEI_WIFI_SDCC
-    struct msmsdcc_host *sdcc_host = mmc_priv(host);
-#endif
 
 	mmc_bus_get(host);
 	if (host->bus_resume_flags & MMC_BUSRESUME_MANUAL_RESUME) {
@@ -1346,43 +1347,106 @@ int mmc_resume_host(struct mmc_host *host)
 	}
 
 	if (host->bus_ops && !host->bus_dead) {
-		mmc_power_up(host);
-		mmc_select_voltage(host, host->ocr);
+		if (!(host->pm_flags & MMC_PM_KEEP_POWER)) {
+			mmc_power_up(host);
+			mmc_select_voltage(host, host->ocr);
+		}
 		BUG_ON(!host->bus_ops->resume);
 		err = host->bus_ops->resume(host);
 		if (err) {
 			printk(KERN_WARNING "%s: error %d during resume "
 					    "(card was removed?)\n",
 					    mmc_hostname(host), err);
-			if (host->bus_ops->remove)
-				host->bus_ops->remove(host);
-			mmc_claim_host(host);
-			mmc_detach_bus(host);
-			mmc_release_host(host);
-			/* no need to bother upper layers */
 			err = 0;
 		}
 	}
 	mmc_bus_put(host);
 
+	return err;
+}
+EXPORT_SYMBOL(mmc_resume_host);
+
+/* Do the card removal on suspend if card is assumed removeable
+ * Do that in pm notifier while userspace isn't yet frozen, so we will be able
+   to sync the card.
+*/
+int mmc_pm_notify(struct notifier_block *notify_block,
+					unsigned long mode, void *unused)
+{
+	struct mmc_host *host = container_of(
+		notify_block, struct mmc_host, pm_notify);
+	unsigned long flags;
+
+
+	switch (mode) {
+	case PM_HIBERNATION_PREPARE:
+	case PM_SUSPEND_PREPARE:
+
+		spin_lock_irqsave(&host->lock, flags);
+		host->rescan_disable = 1;
+		spin_unlock_irqrestore(&host->lock, flags);
+		cancel_delayed_work_sync(&host->detect);
+
+		if (!host->bus_ops || host->bus_ops->suspend)
+			break;
+
+		mmc_claim_host(host);
+
+		if (host->bus_ops->remove)
+			host->bus_ops->remove(host);
+
+		mmc_detach_bus(host);
+		mmc_release_host(host);
+		break;
+
+	case PM_POST_SUSPEND:
+	case PM_POST_HIBERNATION:
+
+		spin_lock_irqsave(&host->lock, flags);
+		host->rescan_disable = 0;
+		spin_unlock_irqrestore(&host->lock, flags);
+		mmc_detect_change(host, 0);
+
+	}
+
+	return 0;
+}
+#endif
+
+/**
+ *     mmc_reinit_host - reinit a host
+ *     @host: mmc host
+ */
+int mmc_reinit_host(struct mmc_host *host)
+{
+	int err = -1;
+
+	mmc_bus_get(host);
+
+	if (!host->bus_ops || !host->bus_ops->resume || host->bus_dead) {
+		mmc_bus_put(host);
+		goto out;
+	}
+
+	mmc_power_off(host);
+	mmc_power_up(host);
+	mmc_select_voltage(host, host->ocr);
+	err = host->bus_ops->resume(host);
+	if (err)
+		printk(KERN_WARNING "%s: error %d during reinit\n",
+			mmc_hostname(host), err);
+
+	mmc_bus_put(host);
+out:
 	/*
 	 * We add a slight delay here so that resume can progress
 	 * in parallel.
 	 */
-#ifdef CONFIG_HUAWEI_WIFI_SDCC
-    if (sdcc_host->pdev_id != ATH_WLAN_SLOT) {
-#endif
-        mmc_detect_change(host, 1);
-#ifdef CONFIG_HUAWEI_WIFI_SDCC
-    }
-#endif
+	mmc_detect_change(host, 1);
 
 	return err;
 }
-
-EXPORT_SYMBOL(mmc_resume_host);
-
-#endif
+EXPORT_SYMBOL(mmc_reinit_host);
 
 #ifdef CONFIG_MMC_EMBEDDED_SDIO
 void mmc_set_embedded_sdio_data(struct mmc_host *host,
